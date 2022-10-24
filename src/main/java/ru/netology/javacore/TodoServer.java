@@ -22,14 +22,14 @@ public class TodoServer {
 
     public void start() throws IOException {
         System.out.println("Starting server at " + port + "...");
-        try (ServerSocket serverSocket = new ServerSocket(8989);) { // стартуем сервер один(!) раз
-            while (true) { // в цикле(!) принимаем подключения
+        try (ServerSocket serverSocket = new ServerSocket(8989);) {
+            while (true) { 
                 try (
                         Socket socket = serverSocket.accept();
                         BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                         PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
                 ) {
-                    // обработка одного подключения
+                   
                     String input = in.readLine();
                     JsonObject jsonObject = new Gson().fromJson(input, JsonObject.class).getAsJsonObject();
 
