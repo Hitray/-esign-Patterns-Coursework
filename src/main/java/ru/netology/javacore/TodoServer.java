@@ -1,68 +1,48 @@
 package ru.netology.javacore;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonObject;
-
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
-import java.net.ServerSocket;
-import java.net.Socket;
+import com.google.gson.*;
+import java.io.*;
+import java.net.*;
 
 public class TodoServer {
-    private Todos todos;
     private int port;
+    private Todos todos;
 
     public TodoServer(int port, Todos todos) {
         this.port = port;
         this.todos = todos;
-
     }
 
-    public void start() throws IOException {
-        System.out.println("Starting server at " + port + "...");
-        try (ServerSocket serverSocket = new ServerSocket(8989);) {
-            while (true) { 
-                try (
-                        Socket socket = serverSocket.accept();
-                        BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-                        PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
-                ) {
-                   
-                    String input = in.readLine();
-                    JsonObject jsonObject = new Gson().fromJson(input, JsonObject.class).getAsJsonObject();
-
-                    String operation = jsonObject.get("type").getAsString();
-                    String task = jsonObject.get("task").getAsString();
-                    String result = applyOperationToTask(operation, task);
-
-                    out.println(result + ": " + todos.getAllTasks());
+    public void start() {
+        try (ServerSocket serverSocket = new ServerSocket(port)) {
+            System.out.println("Starting server at " + port + "...");
+            while (true) {
+                try (Socket clientSocket = serverSocket.accept(); // ждем подключения
+                     PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
+                     BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));) {
+                    System.out.printf("New connection accepted. Port: %d%n", clientSocket.getPort());
+                    while (true) {
+                        String json = in.readLine();
+                        GsonBuilder builder = new GsonBuilder();
+                        Gson gson = builder.create();
+                        JsonClient jsonClient = gson.fromJson(json, JsonClient.class);
+                        if (jsonClient.type.equals("ADD")) {
+                            todos.addTask(jsonClient.task);
+                            out.println(todos.getAllTasks());
+                            break;
+                        }
+                        if (jsonClient.type.equals("REMOVE")) {
+                            todos.removeTask(jsonClient.task);
+                            out.println(todos.getAllTasks());
+                            break;
+                        }
+                    }
                 }
             }
-        } catch (IOException e) {
-            System.out.println("Не могу стартовать сервер");
-            e.printStackTrace();
+        } catch (Exception err) {
+            System.out.println(err);
+        } finally {
+            System.out.println("Server closed!");
         }
-    }
-
-    public String applyOperationToTask(String operation, String task) {
-        String result;
-        if (operation.equals("ADD")) {
-            if (todos.addTask(task)) {
-                result = "Задача \"" + task + "\" успешно добавлена в список";
-            } else {
-                result = "Задача \"" + task + "\" была добавлена в список ранее";
-            }
-        } else if (operation.equals("REMOVE")) {
-            if (todos.removeTask(task)) {
-                result = "Задача \"" + task + "\" успешно удалена из списка";
-            } else {
-                result = "Задачи \"" + task + "\" нет в списке";
-            }
-        } else {
-            result = "unknown command";
-        }
-        return result;
     }
 }
