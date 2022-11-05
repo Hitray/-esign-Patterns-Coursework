@@ -1,33 +1,24 @@
 package ru.netology.javacore;
 
-import java.util.TreeSet;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class Todos {
-    private TreeSet<String> tasks;
+    private List<String> tasks = new ArrayList<>();
 
-    Todos() {
-        tasks = new TreeSet<>();
+    public void addTask(String task) {
+        tasks.add(task);
     }
 
-    public boolean addTask(String task) {
-        if (tasks.contains(task)) {
-            return false;
-        } else {
-            tasks.add(task);
-            return true;
-        }
-    }
-
-    public boolean removeTask(String task) {
-        if (!tasks.contains(task)) {
-            return false;
-        } else {
-            tasks.remove(task);
-            return true;
-        }
+    public void removeTask(String task) {
+        tasks.remove(task);
     }
 
     public String getAllTasks() {
-        return tasks.toString();
+        String listTasks = tasks.stream()
+                .sorted(Comparator.naturalOrder())
+                .collect(Collectors.joining(" "));
+        return listTasks;
     }
+
 }
