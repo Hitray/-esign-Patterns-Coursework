@@ -1,62 +1,63 @@
 package ru.netology.javacore;
 
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
-
-import java.util.stream.Stream;
+import org.junit.jupiter.params.provider.ValueSource;
 
 public class TodosTests {
-    private static Todos todos;
+
+    private Todos todos = new Todos();
+    private static long suiteStartTime;
+    private long testStartTime;
 
     @BeforeAll
-    public static void initTodos() {
-        todos = new Todos();
+    public static void initSuite() {
+        System.out.println("Running TodosTests");
+        suiteStartTime = System.nanoTime();
     }
-
-    public static Stream<Arguments> methodSourceForAdd() {
-        return Stream.of(
-                Arguments.of("task1", true), //новые задачи должны добавляться
-                Arguments.of("task2", true),
-                Arguments.of("task1", false) //повторно задачу добавить нельзя
-        );
+    @AfterAll
+    public static void completeSuite() {
+        System.out.println("TodosTests complete: " + (System.nanoTime() - suiteStartTime));
     }
-
-    public static Stream<Arguments> methodSourceForRemove() {
-        return Stream.of(
-                Arguments.of("task3", true),
-                Arguments.of("task4", false) 
-        );
+    @BeforeEach
+    public void initTest() {
+        System.out.println("\nStarting new test");
+        testStartTime = System.nanoTime();
     }
-
-    @ParameterizedTest
-    @MethodSource("methodSourceForAdd")
-    public void testAddTask(String task, boolean expectedResult) {
-        boolean actualResult = todos.addTask(task);
-        Assertions.assertEquals(expectedResult, actualResult);
+    @AfterEach
+    public void finalizeTest() {
+        System.out.println("Test complete:" + (System.nanoTime() - testStartTime));
     }
 
     @ParameterizedTest
-    @MethodSource("methodSourceForRemove")
-    public void testRemoveTask(String task, boolean expectedResult) {
-        todos.addTask("task3");
-        boolean actualResult = todos.removeTask(task);
-        Assertions.assertEquals(expectedResult, actualResult);
+    @ValueSource(strings = {"Сходить в бар", "Пойти на пляж", "Отдых"})
+    public void testAddTaskEquals(String task) {
+        todos.addTask(task);
+        String expected = task;
+        Assertions.assertEquals(expected, todos.getAllTasks());
     }
-
-
-    
     @Test
-    void testGetAllTasks() {
-        Todos todosAll = new Todos();
-        todosAll.addTask("B");
-        todosAll.addTask("A");
+    public void testRemoveTaskEquals() {
+        String task1 = "Сходить в бар";
+        String task2 = "Пойти на пляж";
+        String expected = task1;
 
-        String expectedResult = "[A, B]";
-        String actualResult = todosAll.getAllTasks();
-        Assertions.assertEquals(expectedResult, actualResult);
+        todos.addTask(task1);
+        todos.addTask(task2);
+        todos.removeTask(task2);
+
+        Assertions.assertEquals(expected, todos.getAllTasks());
+    }
+    @Test
+    public void testAllTaskEquals() {
+        String task1 = "Сходить в бар";
+        String task2 = "Пойти на пляжу";
+        String separator = " ";
+        String expected = task2 + separator + task1;
+
+        todos.addTask(task1);
+        todos.addTask(task2);
+
+        Assertions.assertEquals(expected, todos.getAllTasks());
     }
 }
